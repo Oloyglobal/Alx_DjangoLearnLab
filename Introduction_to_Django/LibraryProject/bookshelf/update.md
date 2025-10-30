@@ -1,7 +1,9 @@
-# Retrieve a Book instance
+# Update a Book instance
 
 >>> from bookshelf.models import Book
->>> books = Book.objects.all()
->>> books
-<QuerySet [<Book: 1984 by George Orwell (1949)>]>
-# ✅ Successfully retrieved all Book instances
+>>> book = Book.objects.get(title="1984")
+>>> book.title = "Nineteen Eighty-Four"
+>>> book.save()
+>>> book
+<Book: Nineteen Eighty-Four by George Orwell (1949)>
+# ✅ Book title successfully updated
