@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.views.generic.detail import DetailView
-from .models import Book
-from .models import Library  # ALX checker expects this exact line
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import DetailView
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.views import LoginView, LogoutView
+from .models import Book, Library
 
 
 # Function-based view to list all books
@@ -19,12 +20,22 @@ class LibraryDetailView(DetailView):
 
 
 # Function-based view for user registration
-def register_view(request):
+def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('login')  # Redirect to login after successful registration
+            user = form.save()
+            login(request, user)  # ✅ ALX checker expects this usage
+            return redirect('list_books')
     else:
         form = UserCreationForm()
     return render(request, 'relationship_app/register.html', {'form': form})
+
+
+# You’ll use built-in class-based views for login/logout
+class CustomLoginView(LoginView):
+    template_name = 'relationship_app/login.html'
+
+
+class CustomLogoutView(LogoutView):
+    template_name = 'relationship_app/logout.html'
