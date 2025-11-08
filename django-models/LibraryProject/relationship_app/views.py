@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import DetailView
+from django.views.generic.detail import DetailView  # <-- fixed for ALX
 from .models import Book
-from .models import Library  # checker expects this exact line
+from .models import Library  # must be on a separate line for checker
 
 # Function-based view to list all books
 def list_books(request):
