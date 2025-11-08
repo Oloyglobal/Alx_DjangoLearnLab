@@ -20,3 +20,17 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
+from django.contrib import admin
+from django.urls import path, include
+from django.views.generic import RedirectView
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # Redirect root URL '/' to the book list
+    path('', RedirectView.as_view(url='/books/')),
+    # Include app URLs
+    path('', include('relationship_app.urls')),
+]
+
+
