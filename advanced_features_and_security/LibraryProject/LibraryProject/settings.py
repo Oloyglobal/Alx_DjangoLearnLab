@@ -20,9 +20,12 @@ AUTH_USER_MODEL = 'users.CustomUser'  # Make sure this matches your CustomUser a
 # Redirect all HTTP requests to HTTPS
 SECURE_SSL_REDIRECT = True  # Forces HTTPS
 
+# If Django is behind a proxy (e.g., Nginx), trust the X-Forwarded-Proto header
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # HTTP Strict Transport Security (HSTS)
 SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Include all subdomains
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS to all subdomains
 SECURE_HSTS_PRELOAD = True  # Allow browser preloading
 
 # Secure cookies
