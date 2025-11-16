@@ -133,3 +133,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # LibraryProject/settings.py
 
 AUTH_USER_MODEL = 'users.CustomUser'
+
+AUTH_USER_MODEL = 'bookshelf.CustomUser'
