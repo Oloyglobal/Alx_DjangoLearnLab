@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings  # <- import this
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -49,7 +49,7 @@ class UserProfile(models.Model):
         ('Librarian', 'Librarian'),
         ('Member', 'Member'),
     ]
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # <- changed here
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Member')
 
     def __str__(self):
@@ -57,7 +57,7 @@ class UserProfile(models.Model):
 
 
 # Automatically create a UserProfile when a User is created
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)  # <- also update sender
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
