@@ -1,4 +1,4 @@
-{% extends "blog/base.html" %}
+{% comment %} {% extends "blog/base.html" %}
 
 {% block  %}
     <h2>
@@ -9,4 +9,12 @@
     </p>
 
 {% endblock %}
-    
+{% endcomment %}
+
+{% extends "blog/base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1>Welcome to the Django Blog</h1>
+<p>Use the nav to register or login.</p>
+{% endblock %}
