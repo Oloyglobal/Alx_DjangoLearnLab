@@ -20,7 +20,7 @@ urlpatterns = [
     path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post-delete'),
 
     # Comment URLs (ALX REQUIRED STRUCTURE)
-    path('posts/<int:pk>/comments/new/', views.add_comment, name='add_comment'),
+    path('post/<int:pk>/comments/new/', views.add_comment, name='add_comment'),
     path('comment/<int:pk>/update/', views.edit_comment, name='edit_comment'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
 ]
