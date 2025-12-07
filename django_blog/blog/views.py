@@ -102,6 +102,7 @@ from django.core.paginator import Paginator
 from taggit.models import Tag
 
 
+
 # ------------------------------
 # Authentication Views
 # ------------------------------
@@ -334,4 +335,13 @@ def search(request):
     results = paginator.get_page(page)
     return render(request, "blog/search_results.html", {"query": q, "results": results})
 
+
+class PostByTagListView(ListView):
+    model = Post
+    template_name = "blog/posts_by_tag.html"
+    context_object_name = "posts"
+
+    def get_queryset(self):
+        tag_slug = self.kwargs.get("tag_slug")
+        return Post.objects.filter(tags__slug=tag_slug)
 

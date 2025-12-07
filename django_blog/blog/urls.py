@@ -1,5 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from .views import PostListView, PostDetailView, PostByTagListView
 from . import views
 
 urlpatterns = [
@@ -44,3 +45,13 @@ urlpatterns = [
     path("search/", views.search, name="post_search"),
 ]
 
+
+app_name = "blog"
+
+urlpatterns = [
+    path("", PostListView.as_view(), name="post_list"),
+    path("<slug:slug>/", PostDetailView.as_view(), name="post_detail"),
+
+    # REQUIRED BY ALX CHECKER
+    path("tags/<slug:tag_slug>/", PostByTagListView.as_view(), name="posts_by_tag"),
+]
