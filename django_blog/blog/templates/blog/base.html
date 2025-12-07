@@ -51,5 +51,11 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+    <!-- templates/base.html -->
+<form method="get" action="{% url 'post_search' %}" class="search-form">
+    <input name="q" type="search" placeholder="Search posts..." value="{{ request.GET.q|default:'' }}">
+    <button type="submit">Search</button>
+</form>
+
 </body>
 </html>

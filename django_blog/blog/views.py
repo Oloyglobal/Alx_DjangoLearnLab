@@ -94,6 +94,13 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, CommentForm
 from .models import Post, Comment
+from .models import Post, Tag
+from .forms import PostForm
+
+from django.db.models import Q
+from django.core.paginator import Paginator
+from taggit.models import Tag
+
 
 # ------------------------------
 # Authentication Views
@@ -143,6 +150,9 @@ def add_comment(request, pk):
     else:
         form = CommentForm()
     return render(request, 'blog/comment_form.html', {'form': form})
+
+
+
 
 
 # ------------------------------
@@ -233,3 +243,95 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('post_detail', kwargs={'pk': self.object.post.pk})
+
+
+
+
+# --- Post create/update using PostForm ---
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    template_name = 'blog/post_form.html'
+    form_class = PostForm
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        post = form.save()
+        return super().form_valid(form)
+
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    template_name = 'blog/post_form.html'
+    form_class = PostForm
+
+    def form_valid(self, form):
+        post = form.save()
+        return super().form_valid(form)
+
+    def test_func(self):
+        return self.request.user == self.get_object().author
+
+# --- Posts by tag ---
+class TagPostListView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'   # reuse list template
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        tag_name = self.kwargs.get('tag_name')
+        return Post.objects.filter(tags__name__iexact=tag_name).order_by('-published_date').distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag_name'] = self.kwargs.get('tag_name')
+        return context
+
+# --- Search view (function-based for simplicity) ---
+def search(request):
+    q = request.GET.get('q', '').strip()
+    results = Post.objects.none()
+    if q:
+        results = Post.objects.filter(
+            Q(title__icontains=q) |
+            Q(content__icontains=q) |
+            Q(tags__name__icontains=q)
+        ).distinct().order_by('-published_date')
+    return render(request, 'blog/search_results.html', {'posts': results, 'query': q})
+
+
+
+def post_list(request):
+    qs = Post.objects.filter(published=True).order_by("-created_at")
+    paginator = Paginator(qs, 10)
+    page = request.GET.get("page")
+    posts = paginator.get_page(page)
+    return render(request, "blog/post_list.html", {"posts": posts})
+
+def post_detail(request, slug):
+    post = get_object_or_404(Post, slug=slug, published=True)
+    return render(request, "blog/post_detail.html", {"post": post})
+
+def posts_by_tag(request, tag_slug):
+    tag = get_object_or_404(Tag, slug=tag_slug)
+    posts = Post.objects.filter(tags__slug=tag_slug, published=True).order_by("-created_at")
+    paginator = Paginator(posts, 10)
+    page = request.GET.get("page")
+    posts = paginator.get_page(page)
+    return render(request, "blog/posts_by_tag.html", {"posts": posts, "tag": tag})
+
+def search(request):
+    q = request.GET.get("q", "").strip()
+    results = Post.objects.none()
+    if q:
+        # search title OR content OR tag name
+        results = Post.objects.filter(
+            Q(title__icontains=q) |
+            Q(content__icontains=q) |
+            Q(tags__name__icontains=q),
+            published=True
+        ).distinct().order_by("-created_at")
+    paginator = Paginator(results, 10)
+    page = request.GET.get("page")
+    results = paginator.get_page(page)
+    return render(request, "blog/search_results.html", {"query": q, "results": results})
+
+

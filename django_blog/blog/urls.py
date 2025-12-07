@@ -20,7 +20,27 @@ urlpatterns = [
     path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post-delete'),
 
     # Comment URLs (ALX REQUIRED STRUCTURE)
-    path('post/<int:pk>/comments/new/', views.add_comment, name='add_comment'),
-    path('comment/<int:pk>/update/', views.edit_comment, name='edit_comment'),
-    path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
+    # path('post/<int:pk>/comments/new/', views.add_comment, name='add_comment'),
+    # path('comment/<int:pk>/update/', views.edit_comment, name='edit_comment'),
+    # path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
 ]
+
+
+urlpatterns += [
+    # posts by tag (e.g. /tags/django/)
+    path('tags/<str:tag_name>/', views.TagPostListView.as_view(), name='posts-by-tag'),
+
+    # search (e.g. /search/?q=django)
+    path('search/', views.search, name='search'),
+    
+    
+]
+
+
+urlpatterns = [
+    path("", views.post_list, name="post_list"),
+    path("post/<slug:slug>/", views.post_detail, name="post_detail"),
+    path("tag/<slug:tag_slug>/", views.posts_by_tag, name="posts_by_tag"),
+    path("search/", views.search, name="post_search"),
+]
+

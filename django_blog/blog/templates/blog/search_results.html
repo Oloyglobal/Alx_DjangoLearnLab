@@ -1,0 +1,29 @@
+{% extends "blog/base.html" %}
+{% block content %}
+  <h1>Search results for "{{ query }}"</h1>
+  {% include 'blog/post_list.html' %}
+{% endblock %}
+
+
+
+<!-- templates/blog/search_results.html -->
+{% extends "base.html" %}
+{% block content %}
+<h1>Search results{% if query %} for "{{ query }}"{% endif %}</h1>
+{% if results %}
+  {% for post in results %}
+    <article>
+      <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+      <p>{{ post.content|truncatewords:40 }}</p>
+      <p>Tags:
+        {% for tag in post.tags.all %}
+          <a href="{% url 'posts_by_tag' tag.slug %}">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+    </article>
+  {% endfor %}
+  {% include "pagination.html" with page_obj=results %}
+{% else %}
+  <p>No results found.</p>
+{% endif %}
+{% endblock %}
