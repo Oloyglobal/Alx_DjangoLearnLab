@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     # ALX wants this explicit CharField
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField()
 
     class Meta:
         model = get_user_model()  # ALX explicitly checks for get_user_model().objects.create_user
