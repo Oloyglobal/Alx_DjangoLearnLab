@@ -4,12 +4,14 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Post, Comment
+from django.contrib.contenttypes.models import ContentType
+
+from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer
-from accounts.models import User  # import your custom user model
+from notifications.models import Notification
 
 
-# Permission: only authors can edit/delete their content
+# Permissions
 class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -17,7 +19,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         return obj.author == request.user
 
 
-# Pagination for posts and comments
+# Pagination
 class PostPagination(PageNumberPagination):
     page_size = 5
 
@@ -32,7 +34,8 @@ class PostViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'content']
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        post = serializer.save(author=self.request.user)
+        return post
 
 
 # Comment CRUD
@@ -43,10 +46,19 @@ class CommentViewSet(viewsets.ModelViewSet):
     pagination_class = PostPagination
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        comment = serializer.save(author=self.request.user)
+
+        # Create notification for post author
+        Notification.objects.create(
+            recipient=comment.post.author,
+            actor=self.request.user,
+            verb="commented on your post",
+            target=comment
+        )
+        return comment
 
 
-# Feed view: posts from followed users only
+# FEED — posts from followed users
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def feed(request):
@@ -54,3 +66,38 @@ def feed(request):
     posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data)
+
+
+# LIKE a post
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_post(request, post_id):
+    post = Post.objects.get(id=post_id)
+
+    like, created = Like.objects.get_or_create(
+        user=request.user,
+        post=post
+    )
+
+    if created:
+        # Create notification
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb="liked your post",
+            target=post
+        )
+
+    return Response({"message": "Post liked"})
+
+
+# UNLIKE a post
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unlike_post(request, post_id):
+    try:
+        like = Like.objects.get(user=request.user, post_id=post_id)
+        like.delete()
+        return Response({"message": "Post unliked"})
+    except Like.DoesNotExist:
+        return Response({"error": "You haven't liked this post"}, status=400)
