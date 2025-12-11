@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -34,8 +34,7 @@ class PostViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'content']
 
     def perform_create(self, serializer):
-        post = serializer.save(author=self.request.user)
-        return post
+        return serializer.save(author=self.request.user)
 
 
 # Comment CRUD
@@ -48,13 +47,14 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         comment = serializer.save(author=self.request.user)
 
-        # Create notification for post author
-        Notification.objects.create(
-            recipient=comment.post.author,
-            actor=self.request.user,
-            verb="commented on your post",
-            target=comment
-        )
+        # Notification to post author (if not commenting on own post)
+        if comment.post.author != self.request.user:
+            Notification.objects.create(
+                recipient=comment.post.author,
+                actor=self.request.user,
+                verb="commented on your post",
+                target=comment
+            )
         return comment
 
 
@@ -71,16 +71,12 @@ def feed(request):
 # LIKE a post
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def like_post(request, post_id):
-    post = Post.objects.get(id=post_id)
+def like_post(request, pk):
+    post = generics.get_object_or_404(Post, pk=pk)
 
-    like, created = Like.objects.get_or_create(
-        user=request.user,
-        post=post
-    )
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
 
-    if created:
-        # Create notification
+    if created and post.author != request.user:
         Notification.objects.create(
             recipient=post.author,
             actor=request.user,
@@ -94,9 +90,11 @@ def like_post(request, post_id):
 # UNLIKE a post
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def unlike_post(request, post_id):
+def unlike_post(request, pk):
+    post = generics.get_object_or_404(Post, pk=pk)
+
     try:
-        like = Like.objects.get(user=request.user, post_id=post_id)
+        like = Like.objects.get(user=request.user, post=post)
         like.delete()
         return Response({"message": "Post unliked"})
     except Like.DoesNotExist:
